@@ -2,6 +2,7 @@ package opencat_api
 
 import (
 	"context"
+	"io"
 	"os"
 	"testing"
 )
@@ -191,6 +192,17 @@ func TestGenImage(t *testing.T) {
 	}
 }
 
+func writeFile(name string, in io.Reader) error {
+	f, err := os.Create(name)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, in)
+	return err
+}
+
 func TestGenSpeech(t *testing.T) {
 	c := client()
 	speech, err := c.Speech(
@@ -204,8 +216,9 @@ func TestGenSpeech(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer speech.Close()
 
-	err = os.WriteFile("output/speech.wav", speech, 0644)
+	err = writeFile("output/speech.wav", speech)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,7 +229,7 @@ func TestGenSpeechAzure(t *testing.T) {
 	speech, err := c.Speech(
 		context.Background(),
 		SpeechRequest{
-			Input: "Hello! How are you!",
+			Input: "你好啊，李银河！",
 			Voice: "zh-CN-XiaoxiaoNeural",
 			Model: SpeechModelAzure,
 		},
@@ -224,8 +237,9 @@ func TestGenSpeechAzure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer speech.Close()
 
-	err = os.WriteFile("output/speech2.wav", speech, 0644)
+	err = writeFile("output/speech2.wav", speech)
 	if err != nil {
 		t.Fatal(err)
 	}

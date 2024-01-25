@@ -400,7 +400,8 @@ func (c *Client) Image(ctx context.Context, image ImageRequest) ([][]byte, error
 }
 
 // Speech generates speech from a text input.
-func (c *Client) Speech(ctx context.Context, speech SpeechRequest) ([]byte, error) {
+// The returned io.ReadCloser is an MP3 audio stream. Caller must close it.
+func (c *Client) Speech(ctx context.Context, speech SpeechRequest) (io.ReadCloser, error) {
 	if speech.Model == SpeechModelAzure {
 		return c.azureSpeech(ctx, speech)
 	}
@@ -419,20 +420,23 @@ func (c *Client) Speech(ctx context.Context, speech SpeechRequest) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		return nil, NewAPIError(resp)
 	}
 
-	return io.ReadAll(resp.Body)
+	return resp.Body, nil
 }
 
-func (c *Client) azureSpeech(ctx context.Context, speech SpeechRequest) ([]byte, error) {
+// https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-text-to-speech
+// https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-synthesis-markup
+// https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts
+
+func (c *Client) azureSpeech(ctx context.Context, speech SpeechRequest) (io.ReadCloser, error) {
 	body := fmt.Sprintf(
 		`
-<speak version="1.0" xml:lang="en-US">
-<voice xml:lang="en-US" name="%s">%s</voice>
+<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
+<voice name="%s">%s</voice>
 </speak>
 `, speech.Voice, html.EscapeString(speech.Input),
 	)
@@ -446,13 +450,12 @@ func (c *Client) azureSpeech(ctx context.Context, speech SpeechRequest) ([]byte,
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		return nil, NewAPIError(resp)
 	}
 
-	return io.ReadAll(resp.Body)
+	return resp.Body, nil
 }
 
 // Usage returns the current usage of the API.
