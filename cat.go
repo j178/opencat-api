@@ -56,8 +56,9 @@ var (
 type SpeechModel string
 
 var (
-	SpeechModelTTS1  SpeechModel = "tts-1"
-	SpeechModelAzure SpeechModel = "__azure"
+	SpeechModelTTS1   SpeechModel = "tts-1"
+	SpeechModelTTS1HD SpeechModel = "tts-1-hd"
+	SpeechModelAzure  SpeechModel = "__azure"
 )
 
 type Role string
