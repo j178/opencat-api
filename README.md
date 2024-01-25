@@ -1,0 +1,1 @@
+A reverse engineered Golang API wrapper for [Baye](https://twitter.com/waylybaye)'s [OpenCat](https://opencat.app), which provides access to GPT3.5, GPT4, Claude, Gemini, DallE, StableDiffusion and more.
